@@ -59,14 +59,40 @@ fn drop(&mut self) {
   }
 }
 
+// Iterator TODO for a collection
+// IntoIter - T
+// IterMut - &mut T
+// Iter &T
+
 pub struct IntoIter<T>(List<T>);
+
+pub struct Iter<'a, T: 'a> {
+  next: Option<&'a Node<T>>
+}
 
 impl<T> List<T> {
 pub fn into_iter(self) -> IntoIter<T> {
   IntoIter(self)
   }
+
+pub fn iter(&self) -> Iter<T> {
+  Iter { next: self.head.as_ref().map(|node| { &**node }) }
+  }
 }
 
+impl<'a, T> Iterator for Iter<'a, T> {
+  type Item = &'a T;
+  fn next(&mut self) -> Option<Self::Item> {
+    self.next.map(|node| {
+    self.next = node.next.as_ref().map(|node| { &**node }); 
+    &node.elem
+    }) 
+  }
+}
+
+
+// each iterator has an associated type Item
+// even if generic
 impl<T> Iterator for IntoIter<T> {
 type Item = T;
 fn next(&mut self) -> Option<Self::Item> {
@@ -74,12 +100,28 @@ fn next(&mut self) -> Option<Self::Item> {
   }
 }
 
+
 #[cfg(test)]
 mod test {
 use super::List;
 
 #[test]
-fn iterations() {
+fn iter() {
+let mut li = List::new();
+li.push(3.3);
+li.push(3.4);
+li.push(3.5);
+
+let mut iterli = li.iter();
+assert_eq!(iterli.next(), Some(&3.5));
+assert_eq!(iterli.next(), Some(&3.4));
+assert_eq!(iterli.next(), Some(&3.3));
+assert_eq!(iterli.next(), None);
+
+}
+
+#[test]
+fn intoiter() {
     let mut list = List::new();
     list.push("lol");
     list.push("wat");
